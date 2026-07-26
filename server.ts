@@ -3,12 +3,16 @@ import http from "http";
 import path from "path";
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer as createViteServer } from "vite";
+import { GoogleGenAI } from "@google/genai";
 import { Channel, Message, User, TypingStatus, VoiceParticipant } from "./src/types";
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: "25mb" }));
+
+// Initialize Gemini AI Client if GEMINI_API_KEY is available
+const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 // Pre-populated default user (Host user)
 const DEFAULT_USERS: User[] = [
@@ -73,6 +77,108 @@ app.get("/api/channels", (_req, res) => {
   res.json(channels);
 });
 
+// AI Smart Auto-Reply Helper for direct contacts & groups
+async function triggerAutoReply(channelId: string, senderId: string, senderName: string, userContent: string) {
+  const ch = channels.find((c) => c.id === channelId);
+  if (!ch) return;
+
+  // Determine who should reply
+  let recipientUser: User | undefined;
+  
+  if (ch.type === "direct") {
+    const otherUserId = ch.members.find((m) => m !== senderId);
+    if (otherUserId) {
+      recipientUser = activeUsersMap.get(otherUserId);
+    }
+  } else {
+    // Group channel: pick a member other than the sender
+    const otherMemberId = ch.members.find((m) => m !== senderId);
+    if (otherMemberId) {
+      recipientUser = activeUsersMap.get(otherMemberId);
+    }
+  }
+
+  if (!recipientUser) {
+    recipientUser = {
+      id: "user_contact_assistant",
+      name: ch.name || "Friend",
+      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+      status: "online",
+      joinedAt: new Date().toISOString(),
+    };
+  }
+
+  // 1. Send "isTyping: true"
+  setTimeout(() => {
+    broadcastWS({
+      type: "typing_update",
+      channelId,
+      userName: recipientUser!.name,
+      isTyping: true,
+    });
+  }, 400);
+
+  // 2. Generate message after 1.8s
+  setTimeout(async () => {
+    let replyText = "";
+    if (ai && userContent) {
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: `You are ${recipientUser!.name}, a friendly Sri Lankan contact chatting on WhatsApp with ${senderName}. They sent you: "${userContent}". Reply as ${recipientUser!.name} in a short, warm 1-2 sentence message. If they used Sinhala or Singlish, reply in friendly Sinhala/Singlish! Use WhatsApp emojis.`,
+        });
+        replyText = response.text?.trim() || "";
+      } catch (err) {
+        console.error("Gemini AI Auto-Reply error:", err);
+      }
+    }
+
+    if (!replyText) {
+      const fallbackReplies = [
+        "Ela machan! Got your message 👍",
+        "Harima hondai! Kohomada aluth visethura?",
+        "Ow machan, eka niyamai! Send me more details.",
+        "Subha dhavasak! I'm online now. How can I help?",
+        "Awesome! Thanks for reaching out 💬",
+        "Ela ela! Let's talk more soon!",
+      ];
+      replyText = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
+    }
+
+    const replyMsg: Message = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      channelId,
+      senderId: recipientUser!.id,
+      senderName: recipientUser!.name,
+      senderAvatar: recipientUser!.avatar,
+      content: replyText,
+      timestamp: new Date().toISOString(),
+      type: "text",
+      reactions: [],
+    };
+
+    if (!messages[channelId]) {
+      messages[channelId] = [];
+    }
+    messages[channelId].push(replyMsg);
+    ch.lastMessageAt = replyMsg.timestamp;
+
+    // Turn off typing
+    broadcastWS({
+      type: "typing_update",
+      channelId,
+      userName: recipientUser!.name,
+      isTyping: false,
+    });
+
+    // Broadcast new message
+    broadcastWS({
+      type: "new_message",
+      message: replyMsg,
+    });
+  }, 1800);
+}
+
 app.post("/api/channels", (req, res) => {
   const { name, description, icon, type, createdBy, members } = req.body;
   if (!name) {
@@ -87,12 +193,32 @@ app.post("/api/channels", (req, res) => {
     description: description || "",
     icon: icon || "#",
     createdBy: createdBy || "user_kasun",
-    members: members || ["user_kasun", "user_dilshan", "user_nimali", "user_amal"],
+    members: members || ["user_kasun"],
     category: type === "direct" ? "DIRECT MESSAGES" : "GROUP CHANNELS",
   };
   channels.push(newChannel);
   if (!messages[newChannel.id]) {
     messages[newChannel.id] = [];
+  }
+
+  // Welcome message if DM
+  if (type === "direct" && members && members.length > 1) {
+    const otherUserId = members.find((m: string) => m !== createdBy);
+    const otherUser = activeUsersMap.get(otherUserId);
+    if (otherUser) {
+      const welcomeMsg: Message = {
+        id: `msg_${Date.now()}_init`,
+        channelId: newChannel.id,
+        senderId: otherUser.id,
+        senderName: otherUser.name,
+        senderAvatar: otherUser.avatar,
+        content: `Hey! 👋 Thanks for adding me on WhatsApp! How are you doing?`,
+        timestamp: new Date().toISOString(),
+        type: "text",
+        reactions: [],
+      };
+      messages[newChannel.id].push(welcomeMsg);
+    }
   }
 
   // Broadcast new channel to all connected clients
@@ -214,6 +340,9 @@ app.post("/api/messages", (req, res) => {
     type: "new_message",
     message: newMsg,
   });
+
+  // Trigger AI contact auto-reply
+  triggerAutoReply(channelId, senderId, senderName || "Friend", content);
 
   res.status(201).json(newMsg);
 });
@@ -510,6 +639,9 @@ wss.on("connection", (ws: WebSocket) => {
             type: "new_message",
             message: newMsg,
           });
+
+          // Trigger AI contact auto-reply
+          triggerAutoReply(channelId, senderId, senderName || "Friend", content);
           break;
         }
 
