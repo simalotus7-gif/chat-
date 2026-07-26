@@ -1,16 +1,11 @@
 import React from 'react';
 import { 
-  Hash, 
   Phone, 
   Video, 
   Users, 
   Pin, 
   Search, 
-  UserPlus, 
-  Share2, 
-  Globe, 
-  Lock,
-  Sparkles,
+  MoreVertical,
   Volume2
 } from 'lucide-react';
 import { Channel } from '../types';
@@ -41,92 +36,86 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onSearchClick,
 }) => {
   return (
-    <div className="h-14 px-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between shadow-sm select-none z-10 flex-shrink-0">
-      {/* Left Channel Info */}
-      <div className="flex items-center gap-3 overflow-hidden">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{channel.icon || '#'}</span>
-          <h2 className="font-bold text-slate-100 text-base tracking-wide truncate">
-            {channel.name}
-          </h2>
+    <div className="h-16 px-4 bg-whatsapp-panel border-b border-slate-800/60 flex items-center justify-between select-none z-10 flex-shrink-0">
+      {/* Left Contact / Channel Info */}
+      <div 
+        onClick={onOpenMembers}
+        className="flex items-center gap-3 cursor-pointer group overflow-hidden"
+      >
+        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0 overflow-hidden">
+          {channel.type === 'direct' ? (
+            channel.name.substring(0, 2).toUpperCase()
+          ) : (
+            <span>{channel.icon || '💬'}</span>
+          )}
         </div>
 
-        {channel.description && (
-          <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 pl-3 border-l border-slate-800 truncate max-w-md">
-            <span className="truncate">{channel.description}</span>
-          </div>
-        )}
+        <div className="overflow-hidden leading-tight">
+          <h2 className="font-bold text-slate-100 text-base tracking-wide truncate group-hover:text-emerald-400 transition-colors">
+            {channel.name}
+          </h2>
+          <p className="text-[11px] text-emerald-400 font-medium truncate">
+            {channel.type === 'direct' ? 'online • click for info' : `${memberCount} members • ${onlineCount} online`}
+          </p>
+        </div>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1.5 flex-shrink-0 text-slate-300">
         {/* Voice Call Button */}
         <button
           onClick={onStartVoiceCall}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm ${
+          className={`p-2.5 rounded-full transition-all ${
             isInVoiceCall
-              ? 'bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse'
-              : 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
+              ? 'bg-emerald-600 text-white animate-pulse'
+              : 'hover:bg-slate-700/60 text-slate-300 hover:text-white'
           }`}
-          title="Join Voice / Video Room"
+          title="WhatsApp Voice Call"
         >
-          {isInVoiceCall ? (
-            <>
-              <Volume2 className="w-3.5 h-3.5 text-white" />
-              <span>In Voice</span>
-            </>
-          ) : (
-            <>
-              <Phone className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="hidden sm:inline">Voice Call</span>
-            </>
-          )}
+          {isInVoiceCall ? <Volume2 className="w-5 h-5 text-white" /> : <Phone className="w-5 h-5" />}
         </button>
 
-        {/* Invite Link Button */}
+        {/* Video Call Mock Button */}
         <button
-          onClick={onOpenAddFriend}
-          className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-colors"
-          title="Share Invite Code / Room Link"
+          onClick={onStartVoiceCall}
+          className="p-2.5 rounded-full hover:bg-slate-700/60 text-slate-300 hover:text-white transition-colors"
+          title="WhatsApp Video Call"
         >
-          <Share2 className="w-4 h-4" />
+          <Video className="w-5 h-5" />
         </button>
 
         {/* Search */}
         <button
           onClick={onSearchClick}
-          className="p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition-colors"
-          title="Search Messages"
+          className="p-2.5 rounded-full hover:bg-slate-700/60 text-slate-300 hover:text-white transition-colors"
+          title="Search in chat"
         >
-          <Search className="w-4 h-4" />
+          <Search className="w-5 h-5" />
         </button>
 
         {/* Pinned Messages */}
         <button
           onClick={onTogglePins}
-          className={`p-2 rounded-lg transition-colors ${
+          className={`p-2.5 rounded-full transition-colors ${
             showPins
-              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+              ? 'bg-amber-500/20 text-amber-400'
+              : 'hover:bg-slate-700/60 text-slate-300 hover:text-white'
           }`}
           title="Pinned Messages"
         >
-          <Pin className="w-4 h-4" />
+          <Pin className="w-5 h-5" />
         </button>
 
         {/* Members Drawer Toggle */}
         <button
           onClick={onOpenMembers}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors border border-slate-700/50"
-          title="Show Channel Members"
+          className="p-2.5 rounded-full hover:bg-slate-700/60 text-slate-300 hover:text-white transition-colors"
+          title="Chat info & members"
         >
-          <Users className="w-3.5 h-3.5 text-slate-400" />
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            {onlineCount}/{memberCount}
-          </span>
+          <MoreVertical className="w-5 h-5" />
         </button>
       </div>
     </div>
   );
 };
+

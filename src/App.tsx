@@ -526,6 +526,64 @@ export default function App() {
       });
   };
 
+  // Add Contact by Email
+  const handleAddContactByEmail = (email: string, name?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const displayName = name && name.trim() ? name.trim() : cleanEmail.split('@')[0];
+    const contactUserId = `user_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+
+    const newContactUser: User = {
+      id: contactUserId,
+      name: displayName,
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`,
+      status: 'online',
+      customStatus: `📧 ${cleanEmail}`,
+      bio: `Email contact: ${cleanEmail}`,
+      joinedAt: new Date().toISOString(),
+    };
+
+    setUsers((prev) => {
+      if (prev.some((u) => u.id === contactUserId)) return prev;
+      return [...prev, newContactUser];
+    });
+
+    fetch('/api/users/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newContactUser),
+    }).catch(() => {});
+
+    const existingDm = channels.find(
+      (c) => c.type === 'direct' && c.members.includes(contactUserId) && c.members.includes(currentUser.id)
+    );
+
+    if (existingDm) {
+      setActiveChannelId(existingDm.id);
+      setActiveTab('channels');
+    } else {
+      fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: displayName,
+          type: 'direct',
+          description: `Direct Email Chat with ${cleanEmail}`,
+          icon: '✉️',
+          createdBy: currentUser.id,
+          members: [currentUser.id, contactUserId],
+        }),
+      })
+        .then((res) => res.json())
+        .then((newDm) => {
+          setChannels((prev) => [...prev, newDm]);
+          setActiveChannelId(newDm.id);
+          setActiveTab('channels');
+          sounds.playSend();
+        })
+        .catch(() => {});
+    }
+  };
+
   // Start Direct Message with User
   const handleStartDirectMessage = (targetUser: User) => {
     const existingDm = channels.find(
@@ -742,7 +800,7 @@ export default function App() {
   const activeVoiceRoomParticipants = voiceRooms[activeChannelId] || [];
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden antialiased">
+    <div className="flex h-screen w-screen bg-whatsapp-dark text-slate-100 font-sans overflow-hidden antialiased">
       {/* Left Sidebar */}
       <Sidebar
         channels={channels}
@@ -772,7 +830,7 @@ export default function App() {
       />
 
       {/* Center Chat View / Friends View / Starred Messages View */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950 relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-whatsapp-chat relative">
         {activeTab === 'channels' && (
           <>
             <ChatHeader
@@ -978,6 +1036,7 @@ export default function App() {
         <AddFriendModal
           onClose={() => setShowAddFriendModal(false)}
           onOpenUserSwitcher={() => setShowUserSwitcher(true)}
+          onAddContactByEmail={handleAddContactByEmail}
         />
       )}
 

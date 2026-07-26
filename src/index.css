@@ -1,1 +1,51 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .bg-whatsapp-dark {
+    background-color: #111b21;
+  }
+  .bg-whatsapp-panel {
+    background-color: #202c33;
+  }
+  .bg-whatsapp-chat {
+    background-color: #0b141a;
+  }
+  .bg-whatsapp-out {
+    background-color: #005c4b;
+  }
+  .bg-whatsapp-in {
+    background-color: #202c33;
+  }
+  .bg-whatsapp-green {
+    background-color: #00a884;
+  }
+  .text-whatsapp-green {
+    color: #00a884;
+  }
+  .border-whatsapp-green {
+    border-color: #00a884;
+  }
+  
+  /* WhatsApp Doodle Pattern */
+  .whatsapp-wallpaper {
+    background-color: #0b141a;
+    background-image: radial-gradient(rgba(0, 168, 132, 0.08) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Custom scrollbar for WhatsApp style */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
