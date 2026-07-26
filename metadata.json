@@ -1,0 +1,6 @@
+{
+  "name": "TalkTribe",
+  "description": "Real-time messaging platform for chatting with friends, joining group channels, direct messaging, voice notes, media sharing, and group voice calls.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
