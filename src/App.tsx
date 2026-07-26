@@ -10,9 +10,11 @@ import { CreateChannelModal } from './components/CreateChannelModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { UserSwitcher } from './components/UserSwitcher';
 import { ImageViewerModal } from './components/ImageViewerModal';
+import { GoogleAuthModal } from './components/GoogleAuthModal';
+import { ResetSiteModal } from './components/ResetSiteModal';
 import { Channel, Message, User, ChannelType, VoiceParticipant } from './types';
 import { sounds } from './lib/sound';
-import { Users, Star, MessageSquare, Phone, UserPlus, Sparkles, Search } from 'lucide-react';
+import { Users, Star, MessageSquare, Phone, UserPlus, Sparkles, Search, UserX } from 'lucide-react';
 
 const INITIAL_USER: User = {
   id: 'user_kasun',
@@ -55,6 +57,8 @@ export default function App() {
   const [showCreateChannelModal, setShowCreateChannelModal] = useState<boolean>(false);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
   const [showUserSwitcher, setShowUserSwitcher] = useState<boolean>(false);
+  const [showGoogleAuthModal, setShowGoogleAuthModal] = useState<boolean>(false);
+  const [showResetSiteModal, setShowResetSiteModal] = useState<boolean>(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -188,6 +192,27 @@ export default function App() {
 
             case 'voice_room_updated': {
               setVoiceRooms(data.voiceCallRooms || {});
+              break;
+            }
+
+            case 'system_reset': {
+              // Remote or local system reset trigger
+              setCurrentUser(INITIAL_USER);
+              localStorage.clear();
+              setActiveChannelId('general-lounge');
+              setIsInVoiceCall(false);
+              setVoiceRooms({});
+
+              if (data.channels) setChannels(data.channels);
+              if (data.users) setUsers(data.users);
+
+              // Re-fetch messages for general lounge
+              fetch('/api/messages/general-lounge')
+                .then((r) => r.json())
+                .then((msgs) => setMessages({ 'general-lounge': msgs }))
+                .catch(() => {});
+
+              sounds.playPop();
               break;
             }
 
@@ -607,6 +632,64 @@ export default function App() {
     }
   };
 
+  // Login with Google Account
+  const handleLoginWithGoogle = (googleUser: User) => {
+    setCurrentUser(googleUser);
+    setUsers((prev) => {
+      if (prev.some((u) => u.id === googleUser.id)) {
+        return prev.map((u) => (u.id === googleUser.id ? googleUser : u));
+      }
+      return [...prev, googleUser];
+    });
+
+    fetch('/api/users/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(googleUser),
+    });
+
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'auth',
+          user: googleUser,
+        })
+      );
+    }
+  };
+
+  // Factory Reset Handler
+  const handleResetSuccess = () => {
+    setCurrentUser(INITIAL_USER);
+    localStorage.clear();
+    setActiveChannelId('general-lounge');
+    setIsInVoiceCall(false);
+    setVoiceRooms({});
+
+    fetch('/api/channels')
+      .then((r) => r.json())
+      .then(setChannels)
+      .catch(() => {});
+
+    fetch('/api/users')
+      .then((r) => r.json())
+      .then(setUsers)
+      .catch(() => {});
+
+    fetch('/api/messages/general-lounge')
+      .then((r) => r.json())
+      .then((msgs) => setMessages({ 'general-lounge': msgs }))
+      .catch(() => {});
+
+    sounds.playPop();
+  };
+
+  // Remove user handler
+  const handleRemoveUser = (userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    fetch(`/api/users/${userId}`, { method: 'DELETE' }).catch(() => {});
+  };
+
   // Switch User Profile (Simulator)
   const handleSwitchUser = (user: User) => {
     setCurrentUser(user);
@@ -670,6 +753,7 @@ export default function App() {
         onOpenCreateChannel={() => setShowCreateChannelModal(true)}
         onOpenAddFriend={() => setShowAddFriendModal(true)}
         onOpenUserSwitcher={() => setShowUserSwitcher(true)}
+        onOpenGoogleAuth={() => setShowGoogleAuthModal(true)}
         activeVoiceRoom={
           isInVoiceCall
             ? {
@@ -738,6 +822,7 @@ export default function App() {
                   onClose={() => setShowMembersDrawer(false)}
                   onStartDirectMessage={handleStartDirectMessage}
                   onOpenAddFriend={() => setShowAddFriendModal(true)}
+                  onRemoveUser={handleRemoveUser}
                 />
               )}
             </div>
@@ -794,13 +879,22 @@ export default function App() {
                   </div>
 
                   {u.id !== currentUser.id && (
-                    <button
-                      onClick={() => handleStartDirectMessage(u)}
-                      className="p-2 bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold transition-all"
-                      title="Direct Message"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleStartDirectMessage(u)}
+                        className="p-2 bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold transition-all"
+                        title="Direct Message"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleRemoveUser(u.id)}
+                        className="p-2 bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all"
+                        title={`Remove ${u.name}`}
+                      >
+                        <UserX className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -868,6 +962,8 @@ export default function App() {
             sounds.setSoundEnabled(enabled);
             setSoundEnabled(enabled);
           }}
+          onOpenGoogleAuth={() => setShowGoogleAuthModal(true)}
+          onOpenResetModal={() => setShowResetSiteModal(true)}
         />
       )}
 
@@ -891,7 +987,24 @@ export default function App() {
           currentUser={currentUser}
           onSwitchUser={handleSwitchUser}
           onCreateCustomUser={handleCreateCustomUser}
+          onOpenGoogleAuth={() => setShowGoogleAuthModal(true)}
           onClose={() => setShowUserSwitcher(false)}
+          onRemoveUser={handleRemoveUser}
+        />
+      )}
+
+      {showGoogleAuthModal && (
+        <GoogleAuthModal
+          currentUser={currentUser}
+          onLoginWithGoogle={handleLoginWithGoogle}
+          onClose={() => setShowGoogleAuthModal(false)}
+        />
+      )}
+
+      {showResetSiteModal && (
+        <ResetSiteModal
+          onClose={() => setShowResetSiteModal(false)}
+          onResetSuccess={handleResetSuccess}
         />
       )}
 

@@ -63,40 +63,10 @@ const DEFAULT_USERS: User[] = [
     name: "Kasun Perera",
     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
     status: "online",
-    customStatus: "🇱🇰 Cooking Rice & Curry 🍲",
+    customStatus: "🇱🇰 Having Tea & Chatting",
     color: "#3B82F6",
-    bio: "Tech enthusiast from Colombo. Always up for tea or gaming!",
+    bio: "Tech enthusiast from Colombo. Welcome to TalkTribe!",
     joinedAt: "2026-01-15T08:30:00.000Z",
-  },
-  {
-    id: "user_dilshan",
-    name: "Dilshan Silva",
-    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80",
-    status: "online",
-    customStatus: "Coding late night 💻",
-    color: "#10B981",
-    bio: "Software developer & cricket fan.",
-    joinedAt: "2026-02-01T10:00:00.000Z",
-  },
-  {
-    id: "user_nimali",
-    name: "Nimali Fernando",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-    status: "idle",
-    customStatus: "Listening to Music 🎧",
-    color: "#EC4899",
-    bio: "Graphic designer & photography lover from Kandy.",
-    joinedAt: "2026-02-10T14:20:00.000Z",
-  },
-  {
-    id: "user_amal",
-    name: "Amal Jayasinghe",
-    avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=150&q=80",
-    status: "online",
-    customStatus: "Ready for Valorant 🎮",
-    color: "#F59E0B",
-    bio: "Gamer, musician and traveler.",
-    joinedAt: "2026-03-05T18:00:00.000Z",
   },
 ];
 
@@ -108,7 +78,7 @@ let channels: Channel[] = [
     description: "Main lounge for catching up with friends!",
     icon: "💬",
     createdBy: "system",
-    members: ["user_kasun", "user_dilshan", "user_nimali", "user_amal"],
+    members: ["user_kasun"],
     category: "TEXT CHANNELS",
     isPinned: true,
   },
@@ -119,7 +89,7 @@ let channels: Channel[] = [
     description: "🇱🇰 Share local updates, trip plans, food spots & fun memes",
     icon: "🇱🇰",
     createdBy: "system",
-    members: ["user_kasun", "user_dilshan", "user_nimali", "user_amal"],
+    members: ["user_kasun"],
     category: "TEXT CHANNELS",
   },
   {
@@ -129,7 +99,7 @@ let channels: Channel[] = [
     description: "🎮 Coordination room for evening game sessions",
     icon: "🎮",
     createdBy: "system",
-    members: ["user_kasun", "user_dilshan", "user_amal"],
+    members: ["user_kasun"],
     category: "GAMING & FUN",
   },
   {
@@ -139,28 +109,8 @@ let channels: Channel[] = [
     description: "🎵 Post songs, voice audio notes, and playlists",
     icon: "🎵",
     createdBy: "system",
-    members: ["user_kasun", "user_nimali", "user_amal"],
+    members: ["user_kasun"],
     category: "GAMING & FUN",
-  },
-  {
-    id: "dm-user_dilshan",
-    name: "Dilshan Silva",
-    type: "direct",
-    description: "Direct message with Dilshan Silva",
-    icon: "👤",
-    createdBy: "system",
-    members: ["user_kasun", "user_dilshan"],
-    category: "DIRECT MESSAGES",
-  },
-  {
-    id: "dm-user_nimali",
-    name: "Nimali Fernando",
-    type: "direct",
-    description: "Direct message with Nimali Fernando",
-    icon: "👤",
-    createdBy: "system",
-    members: ["user_kasun", "user_nimali"],
-    category: "DIRECT MESSAGES",
   },
 ];
 
@@ -360,6 +310,81 @@ app.post("/api/messages/star", (req, res) => {
     }
   }
   res.status(404).json({ error: "Message not found" });
+});
+
+app.post("/api/system/reset", (req, res) => {
+  const { password } = req.body;
+
+  if (password !== "0000") {
+    res.status(401).json({ error: "Incorrect reset password. PIN must be 0000." });
+    return;
+  }
+
+  channels = [
+    {
+      id: "general-lounge",
+      name: "general-lounge",
+      type: "public_group",
+      description: "Main lounge for catching up with friends!",
+      icon: "💬",
+      createdBy: "system",
+      members: ["user_kasun", "user_dilshan", "user_nimali", "user_amal"],
+      category: "TEXT CHANNELS",
+      isPinned: true,
+    },
+    {
+      id: "sri-lanka-vibes",
+      name: "sri-lanka-vibes",
+      type: "public_group",
+      description: "🇱🇰 Share local updates, trip plans, food spots & fun memes",
+      icon: "🇱🇰",
+      createdBy: "system",
+      members: ["user_kasun", "user_dilshan", "user_nimali", "user_amal"],
+      category: "TEXT CHANNELS",
+    },
+    {
+      id: "gaming-squad",
+      name: "gaming-squad",
+      type: "public_group",
+      description: "🎮 Coordination room for evening game sessions",
+      icon: "🎮",
+      createdBy: "system",
+      members: ["user_kasun", "user_dilshan", "user_amal"],
+      category: "GAMING & FUN",
+    },
+    {
+      id: "music-and-chill",
+      name: "music-and-chill",
+      type: "public_group",
+      description: "🎵 Post songs, voice audio notes, and playlists",
+      icon: "🎵",
+      createdBy: "system",
+      members: ["user_kasun", "user_nimali", "user_amal"],
+      category: "GAMING & FUN",
+    },
+  ];
+
+  messages = {
+    "general-lounge": [
+      {
+        id: "msg_1",
+        channelId: "general-lounge",
+        senderId: "user_kasun",
+        senderName: "Kasun Perera",
+        senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+        content: "System Factory Reset Completed! 🇱🇰 Welcome back to TalkTribe.",
+        timestamp: new Date().toISOString(),
+        type: "text",
+        reactions: [{ emoji: "✨", count: 1, users: ["user_kasun"] }],
+        isPinned: true,
+      },
+    ],
+  };
+
+  activeUsersMap.clear();
+  DEFAULT_USERS.forEach((u) => activeUsersMap.set(u.id, u));
+
+  res.json({ success: true, message: "System factory reset successfully executed." });
 });
 
 app.get("/api/users", (_req, res) => {

@@ -5,7 +5,8 @@ import {
   UserPlus, 
   Sparkles, 
   ShieldCheck,
-  Circle
+  Circle,
+  UserX
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -16,6 +17,7 @@ interface MembersListProps {
   onClose: () => void;
   onStartDirectMessage: (targetUser: User) => void;
   onOpenAddFriend: () => void;
+  onRemoveUser?: (userId: string) => void;
 }
 
 export const MembersList: React.FC<MembersListProps> = ({
@@ -25,6 +27,7 @@ export const MembersList: React.FC<MembersListProps> = ({
   onClose,
   onStartDirectMessage,
   onOpenAddFriend,
+  onRemoveUser,
 }) => {
   const channelUsers = users.filter((u) => channelMembers.includes(u.id));
 
@@ -78,13 +81,24 @@ export const MembersList: React.FC<MembersListProps> = ({
         </div>
 
         {!isMe && (
-          <button
-            onClick={() => onStartDirectMessage(u)}
-            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition-all text-xs"
-            title={`Message ${u.name}`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onStartDirectMessage(u)}
+              className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition-all text-xs"
+              title={`Message ${u.name}`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+            </button>
+            {onRemoveUser && (
+              <button
+                onClick={() => onRemoveUser(u.id)}
+                className="p-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white transition-all text-xs"
+                title={`Remove ${u.name}`}
+              >
+                <UserX className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         )}
       </div>
     );

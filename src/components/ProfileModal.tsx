@@ -8,7 +8,9 @@ import {
   VolumeX, 
   Check, 
   Smile,
-  Shield
+  Shield,
+  RotateCcw,
+  ShieldAlert
 } from 'lucide-react';
 import { User, UserStatus } from '../types';
 
@@ -18,6 +20,8 @@ interface ProfileModalProps {
   onClose: () => void;
   soundEnabled: boolean;
   onToggleSound: (enabled: boolean) => void;
+  onOpenGoogleAuth?: () => void;
+  onOpenResetModal?: () => void;
 }
 
 const AVATAR_PRESETS = [
@@ -35,6 +39,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onClose,
   soundEnabled,
   onToggleSound,
+  onOpenGoogleAuth,
+  onOpenResetModal,
 }) => {
   const [name, setName] = useState(currentUser.name);
   const [avatar, setAvatar] = useState(currentUser.avatar);
@@ -68,9 +74,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <Sparkles className="w-5 h-5 text-indigo-400" />
           Edit My Profile & Status
         </h2>
-        <p className="text-xs text-slate-400 mb-6">
+        <p className="text-xs text-slate-400 mb-4">
           Customize how your friends see you in rooms and direct messages.
         </p>
+
+        {/* Google Account Connection Banner */}
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.23v3.15C3.21 21.32 7.32 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.23C.44 8.14 0 9.99 0 12s.44 3.86 1.23 5.42l4.05-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.21 2.68 1.23 6.58l4.05 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <div>
+              <p className="text-xs font-bold text-white">Google Account</p>
+              <p className="text-[10px] text-blue-200">
+                {currentUser.id.startsWith('google_')
+                  ? 'Connected with Google'
+                  : 'Link your Google account'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              if (onOpenGoogleAuth) onOpenGoogleAuth();
+            }}
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all"
+          >
+            {currentUser.id.startsWith('google_') ? 'Switch Google Account' : 'Sign in with Google'}
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar Selection */}
@@ -199,6 +236,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {soundEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
+
+          {/* System Factory Reset Option */}
+          {onOpenResetModal && (
+            <div className="flex items-center justify-between p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-rose-400" />
+                <div>
+                  <p className="text-xs font-bold text-rose-200">Factory Reset Site (PIN: 0000)</p>
+                  <p className="text-[10px] text-rose-300/80">
+                    Wipe all messages, channels & reset to clean state
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenResetModal();
+                }}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Reset Site
+              </button>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="pt-2 flex items-center justify-end gap-2">

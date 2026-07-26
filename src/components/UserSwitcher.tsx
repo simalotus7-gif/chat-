@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, Check, Plus, UserPlus, Sparkles } from 'lucide-react';
+import { X, Users, Check, Plus, UserPlus, Sparkles, UserX } from 'lucide-react';
 import { User } from '../types';
 
 interface UserSwitcherProps {
@@ -7,7 +7,9 @@ interface UserSwitcherProps {
   currentUser: User;
   onSwitchUser: (user: User) => void;
   onCreateCustomUser: (name: string, customStatus: string) => void;
+  onOpenGoogleAuth: () => void;
   onClose: () => void;
+  onRemoveUser?: (userId: string) => void;
 }
 
 export const UserSwitcher: React.FC<UserSwitcherProps> = ({
@@ -15,7 +17,9 @@ export const UserSwitcher: React.FC<UserSwitcherProps> = ({
   currentUser,
   onSwitchUser,
   onCreateCustomUser,
+  onOpenGoogleAuth,
   onClose,
+  onRemoveUser,
 }) => {
   const [newFriendName, setNewFriendName] = useState('');
   const [newFriendStatus, setNewFriendStatus] = useState('');
@@ -50,6 +54,23 @@ export const UserSwitcher: React.FC<UserSwitcherProps> = ({
         <p className="text-xs text-slate-400 mb-5">
           Select a friend to switch into their perspective and send messages back and forth in real-time!
         </p>
+
+        {/* Google Account Login Action */}
+        <button
+          onClick={() => {
+            onClose();
+            onOpenGoogleAuth();
+          }}
+          className="w-full py-2.5 px-4 rounded-2xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 mb-4 shadow-sm transition-all"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.23v3.15C3.21 21.32 7.32 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.23C.44 8.14 0 9.99 0 12s.44 3.86 1.23 5.42l4.05-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.21 2.68 1.23 6.58l4.05 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          Sign In with Google Account
+        </button>
 
         {/* Existing Friends List */}
         <div className="space-y-2 mb-5 max-h-60 overflow-y-auto custom-scrollbar">
@@ -91,15 +112,32 @@ export const UserSwitcher: React.FC<UserSwitcherProps> = ({
                   </div>
                 </div>
 
-                {isSelected ? (
-                  <span className="flex items-center gap-1 text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/30">
-                    <Check className="w-3.5 h-3.5" /> Active
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold text-slate-400 group-hover:text-white">
-                    Switch
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {isSelected ? (
+                    <span className="flex items-center gap-1 text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                      <Check className="w-3.5 h-3.5" /> Active
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-semibold text-slate-400 group-hover:text-white mr-1">
+                        Switch
+                      </span>
+                      {onRemoveUser && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveUser(u.id);
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-600 hover:text-white transition-all text-xs"
+                          title="Remove User"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}
