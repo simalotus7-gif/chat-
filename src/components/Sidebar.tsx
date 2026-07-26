@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onOpenGoogleAuth}
             title="Sign in with Google Account"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-white transition-colors border border-blue-500/30 text-xs font-semibold"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 transition-all shadow-md font-bold text-xs active:scale-95"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
@@ -122,12 +122,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.23C.44 8.14 0 9.99 0 12s.44 3.86 1.23 5.42l4.05-3.15z"/>
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.21 2.68 1.23 6.58l4.05 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
             </svg>
-            <span>Google</span>
+            <span className="hidden sm:inline">Google</span>
           </button>
           <button
             onClick={onOpenAddFriend}
             title="Invite Friends / Add Friend"
-            className="p-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/30"
+            className="p-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/30"
           >
             <UserPlus className="w-4 h-4" />
           </button>

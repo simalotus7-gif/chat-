@@ -119,14 +119,26 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     e.preventDefault();
     if (!googleEmail.trim()) return;
 
-    // Generate avatar from initial or unsplash
     const nameFormatted = googleName.trim() || googleEmail.split('@')[0];
+    const uniqueHash = Math.abs(
+      googleEmail.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    );
+    
+    // Colorful high quality avatar photos for Google users
+    const avatarPool = [
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    ];
+    const chosenAvatar = avatarPool[uniqueHash % avatarPool.length];
+
     const googleUser: User = {
-      id: `google_${Date.now()}`,
+      id: `google_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       name: nameFormatted,
-      avatar: currentUser.avatar.includes('unsplash')
-        ? currentUser.avatar
-        : `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`,
+      avatar: chosenAvatar,
       status: 'online',
       customStatus: `Google Account: ${googleEmail}`,
       bio: `Google Verified Account (${googleEmail})`,
@@ -189,15 +201,15 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         {authMethod === 'quick' ? (
           <form onSubmit={handleQuickGoogleSubmit} className="space-y-4">
             <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-blue-400 shrink-0" />
-              <p className="text-xs text-blue-200">
-                Log in instantly using your Google credentials or Gmail address.
+              <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0" />
+              <p className="text-xs text-blue-200 leading-relaxed">
+                Log in with your Google account. Every user receives a unique verified identity to chat in real-time.
               </p>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
-                Google Email Address
+                Your Google Email
               </label>
               <div className="relative">
                 <input
@@ -214,13 +226,13 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
-                Google Account Full Name
+                Your Name on Google
               </label>
               <input
                 type="text"
                 value={googleName}
                 onChange={(e) => setGoogleName(e.target.value)}
-                placeholder="Google Name"
+                placeholder="Google Display Name"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
                 required
               />
@@ -228,9 +240,10 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
             >
-              <GoogleIcon className="w-4 h-4" /> Sign In with {googleEmail}
+              <GoogleIcon className="w-5 h-5" />
+              <span>Continue with Google ({googleEmail || 'Account'})</span>
             </button>
           </form>
         ) : (
